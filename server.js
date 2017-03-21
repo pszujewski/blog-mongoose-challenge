@@ -1,26 +1,39 @@
 const express = require('express');
 const morgan = require('morgan'); 
+const mongoose = require('mongoose');
+require('dotenv').config();
+mongoose.Promise = global.Promise;
+
 const {blogPostRouter} = require('./blogPostRouter');
 
 const app = express();
 
 app.use(morgan('common'));
-app.use('/blog-posts', blogPostRouter);
+app.use('/posts', blogPostRouter);
 
 
 let server;
 
 function runServer() {
+  const DATABASE_URL = process.env.DATABASE_URL;
+  console.log(DATABASE_URL);
   const port = process.env.PORT || 8080;
   return new Promise((resolve, reject) => {
-    server = app.listen(port, () => {
-      console.log(`Your app is listening on port ${port}`);
-      resolve(server);
-    }).on('error', err => {
-      reject(err)
+    mongoose.connect(DATABASE_URL, error => {
+      if(error) {
+        return reject(error);
+      }
+      server = app.listen(port, () => {
+        console.log(`Your app is listenening on port ${port}`)
+        resolve();
+      }).on('error', err => {
+        mongoose.disconnect();
+        reject(err);
+      });
     });
   });
 }
+
 
 function closeServer() {
   return new Promise((resolve, reject) => {

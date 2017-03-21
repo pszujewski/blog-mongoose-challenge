@@ -7,16 +7,27 @@ const router = express.Router();
 const jsonParser = bodyParser.json(); 
 
 router.get('/', (req, res) => {
-  res.json(BlogPosts.get());
+  blogPosts.find().limit(10).exec()
+  .then(posts => {
+    res.json({
+      blogPosts: posts.map((post)=> {
+        return post.apiRepr();
+      })
+    });
+  }).catch(err => {
+    console.error(err);
+  });
 });
 
 router.get('/:id', (req, res) => {
-  console.log(req.params.id);
-  res.json(BlogPosts.get(req.params.id));
+  blogPosts.findById(req.params.id).exec()
+  .then((post) => {
+    res.json(post);
+  });
 });
 
 router.post('/', jsonParser, (req, res) => {
-  const fields = ["title", "content", "author"];
+  const fields = ["title", "author", "content"];
   for (let i=0; i<fields.length; i++) {
     if(!req.body.hasOwnProperty(fields[i])) {
       let message = `Missing ${fields[i]}`;
@@ -24,16 +35,21 @@ router.post('/', jsonParser, (req, res) => {
       return res.status(400).send(message);
     }
   }
-  let newPost = BlogPosts.create(req.body.title, req.body.content, req.body.author);
-  res.status(201).json(newPost);
+  let newPost = blogPosts.create({
+    title: req.body.title, 
+    author: req.body.author,
+    content: req.body.content
+  }).then((post) => {
+    res.status(201).json(post.apiRepr())
+  })
 });
 
 router.delete('/:id', (req, res) => {
-  for (let i=0; i<BlogPosts.posts.length; i++) {
-    let post = BlogPosts.posts[i]; 
+  for (let i=0; i<blogPosts.posts.length; i++) {
+    let post = blogPosts.posts[i]; 
     if (req.params.id === post.id) {
       let message = `Post ID ${req.params.id} has been deleted`;
-      BlogPosts.posts.splice(i, 1);
+      blogPosts.posts.splice(i, 1);
       return res.status(200).send(message);
     }
   }
@@ -42,8 +58,13 @@ router.delete('/:id', (req, res) => {
 });
 
 router.put('/:id', jsonParser, (req, res) => {
-  for (let i=0; i<BlogPosts.posts.length; i++) {
-    let post = BlogPosts.posts[i];
+  blogPosts.findOneAndUpdate({
+    _id: req.params.id
+  },
+    
+  )
+  for (let i=0; i<blogPosts.posts.length; i++) {
+    let post = blogPosts.posts[i];
     if (req.params.id === post.id) {
       post.title = req.body.title;
       post.author = req.body.author;
