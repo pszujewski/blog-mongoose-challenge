@@ -2,9 +2,10 @@ const express = require('express');
 const morgan = require('morgan'); 
 const mongoose = require('mongoose');
 require('dotenv').config();
-mongoose.Promise = global.Promise;
 
 const {blogPostRouter} = require('./blogPostRouter');
+
+mongoose.Promise = global.Promise;
 
 const app = express();
 
@@ -13,10 +14,8 @@ app.use('/posts', blogPostRouter);
 
 
 let server;
-
 function runServer() {
   const DATABASE_URL = process.env.DATABASE_URL;
-  console.log(DATABASE_URL);
   const port = process.env.PORT || 8080;
   return new Promise((resolve, reject) => {
     mongoose.connect(DATABASE_URL, error => {
@@ -24,7 +23,7 @@ function runServer() {
         return reject(error);
       }
       server = app.listen(port, () => {
-        console.log(`Your app is listenening on port ${port}`)
+        console.log(`Your app is listening on port ${port}`)
         resolve();
       }).on('error', err => {
         mongoose.disconnect();
